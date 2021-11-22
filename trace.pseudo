@@ -1,0 +1,79 @@
+global variables:
+	key, var, HR, PHT, traceAddr, coeff
+
+// Replace these numbers (0, 1, 2, ...) with exact trace addresses at binary recompilation
+traceAddr[0] = 0;
+traceAddr[1] = 1;
+traceAddr[2] = 2;
+traceAddr[3] = 3;
+//...
+
+pthread_start
+// From this point two threads are ('trace' and 'predict') executed concurrently
+
+for loop:
+
+while (var < 0) ;			// Synchronization: busy-wait until we receive a predicted trace address from the 'predict' thread
+
+# mov rax, [var]
+# jmp *(rax)
+// Jump to the address of a trace
+
+// Trace 1 code starts here
+   ...
+   compute condition 1			// @@@ One more option is to check conditions at the very end of a trace
+   if (cond1 == true) abort()
+   ...
+   compute condition 2
+   if (cond2 == true) abort()
+   ...
+// Trace 1 code ends here
+// abort 1 handler:
+   if (coeff[key] > 0) coeff[key]--;	// Update coefficients because of a misprediction
+   localCoeff = coeff[key];		// Save this coefficient in case we need to update PHT
+   // Execute non-optimized code
+   ...
+   // Collect branch outcomes
+   ...
+   // Encode branch outcomes into a key (using binary operations)
+   ...
+   if (localCoeff == 0) PHT[HR] = key	// Update PHT if our predictor has strongly mispredicted (coeff = 0)
+					// @@@ Only one key stored in PHT for each HR -- this can be changed (two or more keys for a single HR value)
+   HR.back() = key (or do pop_back and push_back)
+
+# jmp finish_label
+// Jump to the very end of this iteration
+
+// Trace 2 code starts here
+   ...
+   compute condition 1
+   if (cond1 == true) abort()
+   ...
+   compute condition 2
+   if (cond2 == false) abort()
+   ...
+// Trace 2 code ends here
+// abort 2 handler:
+   if (coeff[key] > 0) coeff[key]--;	// Update coefficients because of a misprediction
+   localCoeff = coeff[key];		// Save this coefficient in case we need to update PHT
+   // Execute non-optimized code
+   ...
+   // Collect branch outcomes
+   ...
+   // Encode branch outcomes into a key (using binary operations)
+   ...
+   if (localCoeff == 0) PHT[HR] = key	// Update PHT if our predictor has strongly mispredicted (coeff = 0)
+					// @@@ Only one key stored in PHT for each HR -- this can be changed (two or more keys for a single HR value)
+   HR.back() = key (or do pop_back and push_back)
+   
+# jmp finish_label
+// Jump to the very end of this iteration
+
+finish_label:
+   var = -1;				// Synchronization: it means that 'predict' thread should predict the next trace
+
+end for;
+
+pthread_join 
+// Here we stop executing 'predict' thread
+
