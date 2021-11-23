@@ -9,6 +9,8 @@ predict.pseudo -- pseudocode of a much faster predictor (running in a separate t
 
 trace.pseudo -- pseudocode of a loop that executes traces predicted by a 'predict' thread
 
+trace_condAtTheEnd.pseudo -- alternative version of a pseudocode of a loop; main difference is that branch conditions are checked (and captured) at the end of a trace
+***
 ifthenelse.cpp -- source file that I use for speedup measurement; has a loop with a single branch
 ***
 compile.sh -- bash script to compile everything
