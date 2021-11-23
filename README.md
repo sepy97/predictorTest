@@ -11,6 +11,19 @@ trace.pseudo -- pseudocode of a loop that executes traces predicted by a 'predic
 
 trace_condAtTheEnd.pseudo -- alternative version of a pseudocode of a loop; main difference is that branch conditions are checked (and captured) at the end of a trace
 ***
+# Shared variables that make up the predictor
+key -- the way to identify each trace by a sequence of taken/not taken branches inside of it; for traces with 2 branches there are 4 possible keys (0b00 or 0 in decimal, 0b01 or 1 in decimal, 0b10 or 2 in decimal, 0b11 or three in decimal) and 4 corresponding traces.
+
+var -- the address of a trace that we've predicted. Can be -1 if we're waiting for a prediction.
+
+HR -- history register; containts 4 most recent keys.
+
+PHT -- history table where for each possible HR we have some key.
+
+traceAddr -- array that keeps a physical address for each trace that is identified by a key
+
+coeff -- table of states for each HR (00 -- strongly not taken, 01 -- weakly not taken, 10 -- weakly taken, 11 -- strongly taken).
+***
 ifthenelse.cpp -- source file that I use for speedup measurement; has a loop with a single branch
 ***
 compile.sh -- bash script to compile everything
