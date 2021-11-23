@@ -1,0 +1,18 @@
+global variables: 
+	key, var, HR, PHT, traceAddr, coeff
+
+while (true)
+{
+	key = PHT[HR]		// Do the prediction
+	var = traceAddr[key]	// Decode the trace address out of predicted key
+	
+	// From this point code is executed speculatively (optimistically). 
+	// We assume that prediction is correct and modify HR and coeff according to this assumption
+	HR.pop_front();		//via binary operations
+	HR.push_back(key);	//via binary operations
+	if (coeff[key] < 3) coeff[key]++;
+	// @@@ We can do next prediction speculatively also
+
+	while (var >= 0) ;	// Synchronization: until var != -1 we can't do next prediction
+
+}
