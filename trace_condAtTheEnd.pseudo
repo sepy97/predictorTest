@@ -21,9 +21,12 @@ while (var < 0) ;			// Synchronization: busy-wait until we receive a predicted t
 
 // Trace 1 code starts here
    ...
-   compute condition 1			
+   compute condition 1	
+   generate conditionKey out of these conditions
+   ...
    compute condition 2
    generate conditionKey out of these conditions
+   ...
    if (key != conditionKey) abort()
 // Trace 1 code ends here
 // abort 1 handler:
