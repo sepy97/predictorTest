@@ -24,7 +24,7 @@ while (var < 0) ;			// Synchronization: busy-wait until we receive a predicted t
    compute condition 1			
    compute condition 2
    generate conditionKey out of these conditions
-   if (key xor conditionKey) abort()
+   if (key != conditionKey) abort()
 // Trace 1 code ends here
 // abort 1 handler:
    if (coeff[key] > 0) coeff[key]--;	// Update coefficients because of a misprediction
@@ -44,7 +44,7 @@ while (var < 0) ;			// Synchronization: busy-wait until we receive a predicted t
    compute condition 1			
    compute condition 2
    generate conditionKey out of these conditions
-   if (key xor conditionKey) abort()
+   if (key != conditionKey) abort()
 // Trace 2 code ends here
 // abort 2 handler:
    if (coeff[key] > 0) coeff[key]--;	// Update coefficients because of a misprediction
