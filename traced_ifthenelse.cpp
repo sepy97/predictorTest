@@ -98,8 +98,35 @@ int main (int argc, char *argv[])
 			}
 			else 
 			{
-				// TODO: abort handler
-
+				short correctKey = 0;
+				// Execute non-optimized code and generate new key
+				if (i%7 == 0)
+				{
+					correctKey = 1;	// generating a new key
+					var3 [i] += var2 [i+j];
+					var2 [i/7] -= var11 [i+j];
+				}
+				else
+				{
+					correctKey = 0; // generating a new key
+					var2 [i%7] = var3 [i+j];
+					var3 [i/7] = 2;
+				}
+                		var10 [i/7] += var3 [i%7];
+                		var11 [i+j]++;
+				tr1++;
+				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
+				HR = HR >> 2;		// get rid of an incorrect key
+				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
+				if (coeff[key] > 1) coeff[key]-=2;
+				else 
+				{
+					coeff[key] = 0;	// update the predictor if current trace was mispredicted multiple times
+					PHT[HR] = correctKey;
+				}
+				HR = HR << 2;		// shifting HR 
+				HR += correctKey;	// and writing there a key
+				coeff[correctKey] = 2;	// initialize coeff with 'weakly taken'
 			}
 			goto finish_label;
 
@@ -117,8 +144,35 @@ int main (int argc, char *argv[])
 			}
 			else 
 			{
-				// TODO: abort handler
-
+				short correctKey = 0;
+				// Execute non-optimized code and generate new key
+				if (i%7 == 0)
+				{
+					correctKey = 1;	// generating a new key
+					var3 [i] += var2 [i+j];
+					var2 [i/7] -= var11 [i+j];
+				}
+				else
+				{
+					correctKey = 0; // generating a new key
+					var2 [i%7] = var3 [i+j];
+					var3 [i/7] = 2;
+				}
+                		var10 [i/7] += var3 [i%7];
+                		var11 [i+j]++;
+				tr2++;
+				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
+				HR = HR >> 2;		// get rid of an incorrect key
+				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
+				if (coeff[key] > 1) coeff[key]-=2;
+				else 
+				{
+					coeff[key] = 0;	// update the predictor if current trace was mispredicted multiple times
+					PHT[HR] = correctKey;
+				}
+				HR = HR << 2;		// shifting HR 
+				HR += correctKey;	// and writing there a key
+				coeff[correctKey] = 2;	// initialize coeff with 'weakly taken'
 			}
 			goto finish_label;
 
