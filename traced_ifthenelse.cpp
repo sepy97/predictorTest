@@ -18,11 +18,13 @@ volatile short key = 0, HR = 0;
 volatile unsigned long long addr = -1;
 volatile unsigned long long traceAddr [NUMOFTRACES] = {1, 2};
 volatile short PHT [PHTSIZE]; 		// will be initialized later
-volatile short coeff [NUMOFTRACES]; 	// will be initialized later
+volatile bool coeff [NUMOFTRACES]; 	// will be initialized later
 
 // Predictor function
 void* predictor (void* arg)
 {
+	// TODO: initialization of a predictor 
+	
 	while (true)
 	{
 		key = PHT [HR];
@@ -31,7 +33,7 @@ void* predictor (void* arg)
 		// Speculative modifications of a predictor
 		HR = HR << 2;		// shifting HR 
 		HR += key;		// and writing there a key
-		if (coeff [key] < 3) coeff [key]++;
+		coeff [key] = true;
 
 		while (var >= 0) { }	// Synchronization with a trace thread
 
@@ -118,15 +120,11 @@ int main (int argc, char *argv[])
 				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
 				HR = HR >> 2;		// get rid of an incorrect key
 				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (coeff[key] > 1) coeff[key]-=2;
-				else 
-				{
-					coeff[key] = 0;	// update the predictor if current trace was mispredicted multiple times
-					PHT[HR] = correctKey;
-				}
+				if (!coeff [key]) PHT[HR] = correctKey;
+				else coeff [key] = false;
 				HR = HR << 2;		// shifting HR 
 				HR += correctKey;	// and writing there a key
-				coeff[correctKey] = 2;	// initialize coeff with 'weakly taken'
+				coeff[correctKey] = true;	// initialize coeff with 'taken'
 			}
 			goto finish_label;
 
@@ -164,15 +162,11 @@ int main (int argc, char *argv[])
 				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
 				HR = HR >> 2;		// get rid of an incorrect key
 				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (coeff[key] > 1) coeff[key]-=2;
-				else 
-				{
-					coeff[key] = 0;	// update the predictor if current trace was mispredicted multiple times
-					PHT[HR] = correctKey;
-				}
+				if (!coeff [key]) PHT[HR] = correctKey;
+				else coeff [key] = false;
 				HR = HR << 2;		// shifting HR 
 				HR += correctKey;	// and writing there a key
-				coeff[correctKey] = 2;	// initialize coeff with 'weakly taken'
+				coeff[correctKey] = true;	// initialize coeff with 'taken'
 			}
 			goto finish_label;
 
