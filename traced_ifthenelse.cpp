@@ -14,9 +14,10 @@ long long var2[2000000], var3[2000000], var10[2000000], var11[2000000];
 //Trace Predictor data structure
 #define NUMOFTRACES 2		// 2 traces, size of a key is 1 bit
 #define PHTSIZE 16		// 4 items in a history register, each can have 2 values, 2^4 = 16
-volatile short key = 0, HR = 0;
-volatile unsigned long long addr = -1;
-volatile unsigned long long traceAddr [NUMOFTRACES] = {1, 2};
+volatile short key = 0;
+unsigned int HR = 0, mask_HR = 15;	// 4 items in a history register, each takes 1 bit, last 4 bits are 1, others are 0 -> 1+2+4+8=15
+//volatile unsigned long long addr = -1;
+//volatile unsigned long long traceAddr [NUMOFTRACES] = {1, 2};
 volatile short PHT [PHTSIZE]; 		// will be initialized later
 volatile bool coeff [NUMOFTRACES]; 	// will be initialized later
 
@@ -24,19 +25,26 @@ volatile bool coeff [NUMOFTRACES]; 	// will be initialized later
 void* predictor (void* arg)
 {
 	// TODO: initialization of a predictor 
+	for (int i = 0; i < PHTSIZE; i++)
+	{
+		PHT[i]=0;
+	}
+	for (int j = 0; j < NUMOFTRACES; j++)
+	{
+		coeff[j] = 1;
+	}
 	
 	while (true)
 	{
-		key = PHT [HR];
-		addr = traceAddr [key];
+		key = PHT [HR&mask_HR];
+		//addr = traceAddr [key];
 
 		// Speculative modifications of a predictor
 		HR = HR << 2;		// shifting HR 
 		HR += key;		// and writing there a key
-		coeff [key] = true;
 
-		while (var >= 0) { }	// Synchronization with a trace thread
-
+		while (key >= 0) { }	// Synchronization with a trace thread
+	}
 }
 
 int main (int argc, char *argv[])
@@ -62,11 +70,12 @@ int main (int argc, char *argv[])
 		var10[i] = rand () % 500;
 		var11[i] = rand () % 500;
 	}
-	int tr1 = 0, tr2 = 0;
+	int tr1 = 0, tr2 = 0, iter = 0;
 
 	// Starting a predictor thread
 	pthread_t pred_id;
 	pthread_create (&pred_id, NULL, predictor, NULL);
+	unsigned status = 0; 	// initialization of tx status
 	
 	// Main loop
 	clock_t start = clock ();
@@ -74,20 +83,19 @@ int main (int argc, char *argv[])
 	{
 		for (int i = 0; i < 700014; i++)
 		{
-			while (addr < 0) { }			// Synchronization
-			// TODO: asm mov rax, [addr]
-			// TODO: asm jmp *(rax)
+			while (key < 0) { }			// Synchronization
 			asm volatile
 			(
-				"mov %1, %%eax"
-				"jmp *(%%eax)"
-				: "=r" (addr)
-				: "r" (addr)
-				: "%eax"
-			);
+				"movq %1, %%rax"
+				"jmp *trace_tbl(,%%rax,8)"
+				: "=r" (key)
+				: "r" (key)
+				: "%rax"
+			);	// Insert trace_tbl to the asm file
 
+TRACE1:
 			//TRACE 1 (i%7!=0)
-			unsigned status = _xbegin ();
+			status = _xbegin ();
 			if (status == _XBEGIN_STARTED)
 			{
 				if (i%7 == 0) _xabort (1);
@@ -95,7 +103,6 @@ int main (int argc, char *argv[])
                         	var3 [i/7] = 2;
                 		var10 [i/7] += var3 [i%7];
                 		var11 [i+j]++;
-				tr1++;
 				_xend ();
 			}
 			else 
@@ -116,20 +123,21 @@ int main (int argc, char *argv[])
 				}
                 		var10 [i/7] += var3 [i%7];
                 		var11 [i+j]++;
-				tr1++;
 				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
 				HR = HR >> 2;		// get rid of an incorrect key
 				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (!coeff [key]) PHT[HR] = correctKey;
+				if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
 				else coeff [key] = false;
 				HR = HR << 2;		// shifting HR 
 				HR += correctKey;	// and writing there a key
-				coeff[correctKey] = true;	// initialize coeff with 'taken'
+				key = correctKey;
 			}
-			goto finish_label;
+			tr1++;
+			//goto finish_label;
 
+TRACE2:
 			//TRACE 2 (i%7==0)
-			unsigned status = _xbegin ();
+			status = _xbegin ();
 			if (status == _XBEGIN_STARTED)
 			{
 				if (i%7 != 0) _xabort (2);
@@ -137,7 +145,6 @@ int main (int argc, char *argv[])
                         	var2 [i/7] -= var11 [i+j];
                 		var10 [i/7] += var3 [i%7];
                 		var11 [i+j]++;
-				tr2++;
 				_xend ();
 			}
 			else 
@@ -158,20 +165,22 @@ int main (int argc, char *argv[])
 				}
                 		var10 [i/7] += var3 [i%7];
                 		var11 [i+j]++;
-				tr2++;
 				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
 				HR = HR >> 2;		// get rid of an incorrect key
 				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (!coeff [key]) PHT[HR] = correctKey;
+				if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
 				else coeff [key] = false;
 				HR = HR << 2;		// shifting HR 
 				HR += correctKey;	// and writing there a key
-				coeff[correctKey] = true;	// initialize coeff with 'taken'
+				key = correctKey;
 			}
-			goto finish_label;
+			tr2++;
+			//goto finish_label;
 
 finish_label:
-			addr = -1;
+			iter++;
+			coeff[key] = true;	// initialize coeff with 'taken'
+			key = -1;
 		}
 	}
 	clock_t end = clock ();
