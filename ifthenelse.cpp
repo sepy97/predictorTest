@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
 		c11 = atoi (argv[4]);
 	}
 
-	srand (time (NULL));
+	//srand (time (NULL));
 
 	// Initializing arrays
 	for (int i = 0; i < 2000000; i++) 

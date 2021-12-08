@@ -2,6 +2,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <pthread.h>
+#include <signal.h>		// for pthread_kill
 
 //include for tsx
 #include <immintrin.h>
@@ -24,7 +25,7 @@ volatile bool coeff [NUMOFTRACES]; 	// will be initialized later
 // Predictor function
 void* predictor (void* arg)
 {
-	// TODO: initialization of a predictor 
+	// initialization of a predictor 
 	for (int i = 0; i < PHTSIZE; i++)
 	{
 		PHT[i]=0;
@@ -60,7 +61,7 @@ int main (int argc, char *argv[])
 		c11 = atoi (argv[4]);
 	}
 
-	srand (time (NULL));
+	//srand (time (NULL));
 
 	// Initializing arrays
 	for (int i = 0; i < 2000000; i++) 
@@ -83,6 +84,7 @@ int main (int argc, char *argv[])
 	{
 		for (int i = 0; i < 700014; i++)
 		{
+			//printf ("%d %d\n", j, i);
 			while (key < 0) { }			// Synchronization
 			asm volatile
 			(
@@ -186,7 +188,7 @@ finish_label:
 	clock_t end = clock ();
 
 	// Finishing executing a predictor
-	pthread_join (pred_id, NULL);
+	pthread_kill (pred_id, NULL);
 
 	// Calculating the execution time in seconds
 	double elapsed = (double) (end-start)/CLOCKS_PER_SEC;
