@@ -1,0 +1,17 @@
+12/14/2021
+----------
+
+Baseline O0:
+EXEC cycles: 8122099786 
+EXEC time (sec): 3.12388453 
+
+Traced O0:
+EXEC cycles: 923336535770 
+EXEC time: 355.12943683 
+
+Baseline O2:
+EXEC cycles: 2189039806 
+EXEC time (sec): 0.84193839
+
+Traced O2:
+Compilation error :(
