@@ -3,14 +3,20 @@
 #include <cstdlib>
 #include <pthread.h>
 #include <signal.h>		// for pthread_kill
+#include <cstdint>		// for uint64_t
 
 //include for tsx
 #include <immintrin.h>
-//#include <x86intrin.h>
+//include for rdtsc
+#include <x86intrin.h>
+
+#define CYCLES_PER_SEC 2600000000
 
 using namespace std;
 
 long long var2[2000000], var3[2000000], var10[2000000], var11[2000000];
+	
+long long tr[3] = {0,0,0};	// Counters for trace decisions
 
 //Trace Predictor data structure
 #define NUMOFTRACES 2		// 2 traces, size of a key is 1 bit
@@ -51,14 +57,18 @@ void* predictor (void* arg)
 int main (int argc, char *argv[])
 {
 	long long c2 = 0, c3 = 0, c10 = 0, c11 = 0;
+	char execType = 'r';
+	int numOfIter = 700014;
 
 	// Receiving indexes that we will print later
-	if (argc == 5)
+	if (argc == 7)
 	{
 		c2 = atoi (argv[1]);
 		c3 = atoi (argv[2]);
 		c10 = atoi (argv[3]);
 		c11 = atoi (argv[4]);
+		execType = *argv[5];
+		numOfIter = atoi (argv[6]);
 	}
 
 	//srand (time (NULL));
@@ -71,7 +81,7 @@ int main (int argc, char *argv[])
 		var10[i] = rand () % 500;
 		var11[i] = rand () % 500;
 	}
-	int tr1 = 0, tr2 = 0, iter = 0;
+	long long abort1 = 0, abort2 = 0, iter = 0;
 
 	// Starting a predictor thread
 	pthread_t pred_id;
@@ -79,10 +89,11 @@ int main (int argc, char *argv[])
 	unsigned status = 0; 	// initialization of tx status
 	
 	// Main loop
-	clock_t start = clock ();
+	//clock_t start = clock ();
+	uint64_t start = _rdtsc ();
 	for (int j = 0; j < 500; j++)
 	{
-		for (int i = 0; i < 700014; i++)
+		for (int i = 0; i < numOfIter/*700014*/; i++)
 		{
 			//printf ("%d %d\n", j, i);
 			while (key < 0) { }			// Synchronization
@@ -109,6 +120,7 @@ TRACE1:
 			}
 			else 
 			{
+				abort1++;
 				short correctKey = 0;
 				// Execute non-optimized code and generate new key
 				if (i%7 == 0)
@@ -134,7 +146,7 @@ TRACE1:
 				HR += correctKey;	// and writing there a key
 				key = correctKey;
 			}
-			tr1++;
+			tr[1]++;
 			//goto finish_label;
 
 TRACE2:
@@ -151,6 +163,7 @@ TRACE2:
 			}
 			else 
 			{
+				abort2++;
 				short correctKey = 0;
 				// Execute non-optimized code and generate new key
 				if (i%7 == 0)
@@ -176,7 +189,7 @@ TRACE2:
 				HR += correctKey;	// and writing there a key
 				key = correctKey;
 			}
-			tr2++;
+			tr[2]++;
 			//goto finish_label;
 
 finish_label:
@@ -185,15 +198,30 @@ finish_label:
 			key = -1;
 		}
 	}
-	clock_t end = clock ();
+        uint64_t end = _rdtsc ();
+	//clock_t end = clock ();
 
 	// Finishing executing a predictor
 	pthread_kill (pred_id, NULL);
 
 	// Calculating the execution time in seconds
-	double elapsed = (double) (end-start)/CLOCKS_PER_SEC;
+	uint64_t total = end-start;
+	printf ("EXEC cycles: %lu \n", total);
+	//double elapsed = (double) (end-start)/CLOCKS_PER_SEC;
+	double elapsed = (double) (total)/CYCLES_PER_SEC;
 	printf ("EXEC time: %.8f \n", elapsed);
 
 	// Printing some data from the array (to check that everything is correct)
-	printf ("\n\n\n****\nCurrent state: %lld %lld %lld %lld\n****\ntr1: %d; tr2: %d\n", var2 [c2], var3 [c3], var10 [c10], var11 [c11], tr1, tr2);
+	printf ("\n\n\n****\nCurrent state: %lld %lld %lld %lld\n****\ntr0: %lld; tr1: %lld; tr2: %lld\nMispredicted trace 1: %lld \nMispredicted trace 2: %lld \n", var2 [c2], var3 [c3], var10 [c10], var11 [c11], tr[0], tr[1], tr[2], abort1, abort2);
+	 
+	if (execType == 'v')
+        {
+                printf ("\n#################################################\nVerification: \n");
+                for (int i = 0; i < numOfIter; i++)
+                {
+                        printf ("%lld %lld %lld %lld \n", var2[i], var3[i], var10[i], var11[i]);
+                }
+        }
+
+        printf ("\n\n\n\n");
 }
