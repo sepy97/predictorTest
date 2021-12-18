@@ -15,3 +15,33 @@ EXEC time (sec): 0.84193839
 
 Traced O2:
 Compilation error :(
+
+
+12/17/2021
+----------
+
+Baseline O0:
+EXEC cycles: 1891929184 
+EXEC time: 0.72766507 
+****
+Current state: 47 2 8081 241
+****
+tr0: 3507000; tr1: 0; tr2: 0
+
+Traced O0:
+EXEC cycles: 45238129890 
+EXEC time: 17.39928073 
+****
+Current state: 47 2 8081 241
+****
+tr0: 0; tr1: 3507000; tr2: 0
+Mispredicted trace 1: 501000 
+Mispredicted trace 2: 0 
+
+TransOverhead O0:
+EXEC cycles: 48259768278 
+EXEC time: 18.56144934 
+****
+Current state: 47 2 7081 240
+****
+tr0: 3006000; tr1: 0; tr2: 0

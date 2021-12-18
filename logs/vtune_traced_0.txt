@@ -1,0 +1,72 @@
+EXEC cycles: 6937388174 
+EXEC time: 2.66822622 
+
+
+
+****
+Current state: 47 2 8081 241
+****
+tr0: 0; tr1: 3507000; tr2: 0
+Mispredicted trace 1: 851039 
+Mispredicted trace 2: 0 
+
+
+
+
+
+Collection and Platform Info
+----------------------------
+Parameter                 r000tsx                                                                                                                                                                                                                                                                                                                                                                                                             
+------------------------  --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Application Command Line  ./traced_0.out "1" "2" "3" "4" "r" "7014"                                                                                                                                                                                                                                                                                                                                                                           
+User Name                 root                                                                                                                                                                                                                                                                                                                                                                                                                
+Operating System          4.15.0-159-generic NAME="Ubuntu"
+VERSION="18.04.1 LTS (Bionic Beaver)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 18.04.1 LTS"
+VERSION_ID="18.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=bionic
+UBUNTU_CODENAME=bionic
+Computer Name             node-0.sepy-113001.sysarch-pg0.clemson.cloudlab.us                                                                                                                                                                                                                                                                                                                                                                  
+Result Size               7690197                                                                                                                                                                                                                                                                                                                                                                                                             
+Collection start time     22:34:52 15/12/2021 UTC                                                                                                                                                                                                                                                                                                                                                                                             
+Collection stop time      22:34:55 15/12/2021 UTC                                                                                                                                                                                                                                                                                                                                                                                             
+Collector Type            Event-based sampling driver                                                                                                                                                                                                                                                                                                                                                                                         
+
+CPU
+---
+Parameter          r000tsx                                      
+-----------------  ---------------------------------------------
+Name               Intel(R) Xeon(R) Processor code named Skylake
+Frequency          2593900924                                   
+Logical CPU Count  64                                           
+
+TSX Aborts
+----------
+Parameter       r000tsx
+--------------  -------
+TSX Aborts      850000 
+ Instruction    850000 
+ Data Conflict  0      
+ Capacity       0      
+ Other          0      
+
+Summary
+-------
+Elapsed Time:             2.762
+Paused Time:              0.0  
+CPU Time:                 5.416
+Average CPU Utilization:  1.968
+
+Event summary
+-------------
+Hardware Event Type       Hardware Event Count:Self  Hardware Event Sample Count:Self  Events Per Sample  Precise:Self
+------------------------  -------------------------  --------------------------------  -----------------  ------------
+CPU_CLK_UNHALTED.REF_TSC                14048021072                              7024  2000003                   False
+HLE_RETIRED.ABORTED_PS                            0                                 0  10000                      True
+RTM_RETIRED.ABORTED_PS                       850000                                85  10000                      True
