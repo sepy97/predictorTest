@@ -25,6 +25,12 @@ traceAddr -- array that keeps a physical address for each trace that is identifi
 coeff -- table of states for each HR (00 -- strongly not taken, 01 -- weakly not taken, 10 -- weakly taken, 11 -- strongly taken).
 ***
 ifthenelse.cpp -- source file that I use for speedup measurement; has a loop with a single branch
+
+traced_ifthenelse.cpp -- source file with manually generated (on a source-level) traces
+
+traced_0.s -- assembly file with traces and manually inserted trace_tbl (aka trace_addr from pseudocode) and jmps to traces
+
+transactionalOverhead_ifthenelse.cpp -- source file where transactional instructions (xbegin and xend) were added to the ifthenelse loop. It's done to measure the overhead that is caused solely by transactional memory itself.
 ***
 compile.sh -- bash script to compile everything
 
