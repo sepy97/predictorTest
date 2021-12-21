@@ -15,6 +15,7 @@
 using namespace std;
 
 long long var2[2000000], var3[2000000], var10[2000000], var11[2000000];
+long long abort1 = 0, abort2 = 0, iter = 0;
 	
 long long tr[3] = {0,0,0};	// Counters for trace decisions
 
@@ -54,6 +55,104 @@ void* predictor (void* arg)
 	}
 }
 
+inline void trace1 (int* inp_i, int* inp_j)
+{
+	int i = *inp_i;
+	int j = *inp_j;
+
+	//TRACE 1 (i%7!=0)
+	unsigned status = _xbegin ();
+	if (status == _XBEGIN_STARTED)
+	{
+		if (i%7 == 0) _xabort (1);
+		var2 [i%7] = var3 [i+j];
+		var3 [i/7] = 2;
+		var10 [i/7] += var3 [i%7];
+		var11 [i+j]++;
+		_xend ();
+	}
+	else 
+	{
+		abort1++;
+		short correctKey = 0;
+		// Execute non-optimized code and generate new key
+		if (i%7 == 0)
+		{
+			correctKey = 1;	// generating a new key
+			var3 [i] += var2 [i+j];
+			var2 [i/7] -= var11 [i+j];
+		}
+		else
+		{
+			correctKey = 0; // generating a new key
+			var2 [i%7] = var3 [i+j];
+			var3 [i/7] = 2;
+		}
+		var10 [i/7] += var3 [i%7];
+		var11 [i+j]++;
+		// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
+		HR = HR >> 2;		// get rid of an incorrect key
+		// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
+		if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
+		else coeff [key] = false;
+		HR = HR << 2;		// shifting HR 
+		HR += correctKey;	// and writing there a key
+		key = correctKey;
+	}
+	tr[1]++;
+	//goto finish_label;
+
+}
+
+inline void trace2 (int* inp_i, int* inp_j)
+{
+	int i = *inp_i;
+	int j = *inp_j;
+
+	//TRACE 2 (i%7==0)
+	unsigned status = _xbegin ();
+	if (status == _XBEGIN_STARTED)
+	{
+		if (i%7 != 0) _xabort (2);
+		var3 [i] += var2 [i+j];
+		var2 [i/7] -= var11 [i+j];
+		var10 [i/7] += var3 [i%7];
+		var11 [i+j]++;
+		_xend ();
+	}
+	else 
+	{
+		abort2++;
+		short correctKey = 0;
+		// Execute non-optimized code and generate new key
+		if (i%7 == 0)
+		{
+			correctKey = 1;	// generating a new key
+			var3 [i] += var2 [i+j];
+			var2 [i/7] -= var11 [i+j];
+		}
+		else
+		{
+			correctKey = 0; // generating a new key
+			var2 [i%7] = var3 [i+j];
+			var3 [i/7] = 2;
+		}
+		var10 [i/7] += var3 [i%7];
+		var11 [i+j]++;
+		// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
+		HR = HR >> 2;		// get rid of an incorrect key
+		// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
+		if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
+		else coeff [key] = false;
+		HR = HR << 2;		// shifting HR 
+		HR += correctKey;	// and writing there a key
+		key = correctKey;
+	}
+	tr[2]++;
+	//goto finish_label;
+
+}
+
 int main (int argc, char *argv[])
 {
 	long long c2 = 0, c3 = 0, c10 = 0, c11 = 0;
@@ -81,7 +180,6 @@ int main (int argc, char *argv[])
 		var10[i] = rand () % 500;
 		var11[i] = rand () % 500;
 	}
-	long long abort1 = 0, abort2 = 0, iter = 0;
 
 	// Starting a predictor thread
 	pthread_t pred_id;
@@ -97,100 +195,25 @@ int main (int argc, char *argv[])
 		{
 			//printf ("%d %d\n", j, i);
 			while (key < 0) { }			// Synchronization
-			asm volatile
-			(
-				"movq %1, %%rax"
-				"jmp *trace_tbl(,%%rax,8)"
-				: "=r" (key)
-				: "r" (key)
-				: "%rax"
-			);	// Insert trace_tbl to the asm file
+			switch (key)
+			{
+				case 0:
+					{
+						trace1 (&i, &j);
+						break;
+					}
+				case 1:
+					{
+						trace2 (&i, &j);
+						break;
+					}
+				default:
+					{
+						printf ("INCORRECT key! \n");
+						break;
+					}
+			}
 
-TRACE1:
-			//TRACE 1 (i%7!=0)
-			status = _xbegin ();
-			if (status == _XBEGIN_STARTED)
-			{
-				if (i%7 == 0) _xabort (1);
-                        	var2 [i%7] = var3 [i+j];
-                        	var3 [i/7] = 2;
-                		var10 [i/7] += var3 [i%7];
-                		var11 [i+j]++;
-				_xend ();
-			}
-			else 
-			{
-				abort1++;
-				short correctKey = 0;
-				// Execute non-optimized code and generate new key
-				if (i%7 == 0)
-				{
-					correctKey = 1;	// generating a new key
-					var3 [i] += var2 [i+j];
-					var2 [i/7] -= var11 [i+j];
-				}
-				else
-				{
-					correctKey = 0; // generating a new key
-					var2 [i%7] = var3 [i+j];
-					var3 [i/7] = 2;
-				}
-                		var10 [i/7] += var3 [i%7];
-                		var11 [i+j]++;
-				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
-				HR = HR >> 2;		// get rid of an incorrect key
-				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
-				else coeff [key] = false;
-				HR = HR << 2;		// shifting HR 
-				HR += correctKey;	// and writing there a key
-				key = correctKey;
-			}
-			tr[1]++;
-			//goto finish_label;
-
-TRACE2:
-			//TRACE 2 (i%7==0)
-			status = _xbegin ();
-			if (status == _XBEGIN_STARTED)
-			{
-				if (i%7 != 0) _xabort (2);
-                        	var3 [i] += var2 [i+j];
-                        	var2 [i/7] -= var11 [i+j];
-                		var10 [i/7] += var3 [i%7];
-                		var11 [i+j]++;
-				_xend ();
-			}
-			else 
-			{
-				abort2++;
-				short correctKey = 0;
-				// Execute non-optimized code and generate new key
-				if (i%7 == 0)
-				{
-					correctKey = 1;	// generating a new key
-					var3 [i] += var2 [i+j];
-					var2 [i/7] -= var11 [i+j];
-				}
-				else
-				{
-					correctKey = 0; // generating a new key
-					var2 [i%7] = var3 [i+j];
-					var3 [i/7] = 2;
-				}
-                		var10 [i/7] += var3 [i%7];
-                		var11 [i+j]++;
-				// !!! Starting from here we assume that all speculative updates from the predictor thread is finished
-				HR = HR >> 2;		// get rid of an incorrect key
-				// !!! after shift we do not get previous version of HR (the one that the prediction was based on)
-				if (!coeff [key]) PHT[HR&mask_HR] = correctKey;
-				else coeff [key] = false;
-				HR = HR << 2;		// shifting HR 
-				HR += correctKey;	// and writing there a key
-				key = correctKey;
-			}
-			tr[2]++;
-			//goto finish_label;
 
 finish_label:
 			iter++;

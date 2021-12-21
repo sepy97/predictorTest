@@ -45,3 +45,44 @@ EXEC time: 18.56144934
 Current state: 47 2 7081 240
 ****
 tr0: 3006000; tr1: 0; tr2: 0
+
+
+12/21/2021
+----------
+
+Baseline O0:
+EXEC cycles: 1892481678 
+EXEC time: 0.72787757 
+****
+Current state: 47 2 8081 241
+****
+tr0: 3507000; tr1: 0; tr2: 0
+
+Functionally Traced O0:
+EXEC cycles: 45292541236 
+EXEC time: 17.42020817 
+****
+Current state: 47 2 8081 241
+****
+tr0: 0; tr1: 3507000; tr2: 0
+Mispredicted trace 1: 501000 
+Mispredicted trace 2: 0 
+
+Baseline O2:
+EXEC cycles: 877957820 
+EXEC time: 0.33767608 
+****
+Current state: 47 2 8081 241
+****
+tr0: 3507000; tr1: 0; tr2: 0
+
+Functionally Traced O2:
+EXEC cycles: 32086795008 
+EXEC time: 12.34107500 
+****
+Current state: 47 2 8081 241
+****
+tr0: 0; tr1: 3507000; tr2: 0
+Mispredicted trace 1: 501000 
+Mispredicted trace 2: 0 
+

@@ -7,8 +7,8 @@
 #./traced_0.out 1 2 3 4 v 126 >> log_traced_0.txt
 #./traced_2.out 1 2 3 4 v 126 >> log_traced_2.txt
 
-./traced_0.out 1 2 3 4 r 7014
-#./traced_2.out 1 2 3 4 r 700014
+#./traced_0.out 1 2 3 4 r 7014
+#./traced_2.out 1 2 3 4 r 7014
 
 ################################################################
 # Run on a SINGLE core
@@ -22,8 +22,10 @@
 # Run using Intel SDE
 
 #sde64 -tsx -tsx-stats -- taskset --cpu-list 0,2 ./baseline_0.out 1 2 3 4 r 7014
+sde64 -tsx -tsx-stats -- taskset --cpu-list 0,2 ./baseline_2.out 1 2 3 4 r 7014
 
 #sde64 -tsx -tsx-stats -- taskset --cpu-list 0,2 ./traced_0.out 1 2 3 4 r 7014
+sde64 -tsx -tsx-stats -- taskset --cpu-list 0,2 ./traced_2.out 1 2 3 4 r 7014
 
 ################################################################
 # Run VTune analysis
